@@ -1,0 +1,116 @@
+@implements IDisposable
+@inject GorevDurumService GorevServisi
+
+@if (AcikMi)
+{
+    <div class="modal-backdrop" @onclick="Kapat">
+        <div class="modal-card" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div>
+                    <span class="section-kicker">Yeni kayıt</span>
+                    <h2>@Baslik</h2>
+                </div>
+                <button class="modal-close" @onclick="Kapat">Kapat</button>
+            </div>
+
+            <div class="form-grid modal-form-grid">
+                <label>
+                    Başlık
+                    <input @bind="YeniGorevBaslik" @bind:event="oninput" placeholder="Örn. API hata senaryosunu doğrula" />
+                </label>
+
+                <label>
+                    İş türü
+                    <select @bind="YeniGorevIsTipi">
+                        @foreach (var tip in Enum.GetValues<IsTipi>())
+                        {
+                            <option value="@tip">@GorevServisi.IsTipiEtiketi(tip)</option>
+                        }
+                    </select>
+                </label>
+
+                <label>
+                    Açıklama
+                    <textarea rows="4" @bind="YeniGorevAciklama" placeholder="Kapsam, ihtiyaç ve beklenen çıktı"></textarea>
+                </label>
+
+                <label>
+                    Termin tarihi
+                    <input type="date" @bind-value="YeniGorevTarihi" />
+                </label>
+
+                <label>
+                    Öncelik
+                    <select @bind="YeniGorevOncelik">
+                        @foreach (var oncelik in Enum.GetValues<Oncelik>())
+                        {
+                            <option value="@oncelik">@GorevServisi.OncelikEtiketi(oncelik)</option>
+                        }
+                    </select>
+                </label>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(FormMesaji))
+            {
+                <div class="modal-message">@FormMesaji</div>
+            }
+
+            <div class="modal-actions">
+                <button class="ghost-action" @onclick="Temizle">Temizle</button>
+                <button class="primary-action" @onclick="Kaydet">@KaydetYazisi</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool AcikMi { get; set; }
+    [Parameter] public string Baslik { get; set; } = "Yeni görev";
+    [Parameter] public string KaydetYazisi { get; set; } = "Oluştur";
+    [Parameter] public EventCallback OnKapat { get; set; }
+
+    private string YeniGorevBaslik = string.Empty;
+    private string YeniGorevAciklama = string.Empty;
+    private DateTime YeniGorevTarihi = DateTime.Today.AddDays(3);
+    private Oncelik YeniGorevOncelik = Oncelik.Orta;
+    private IsTipi YeniGorevIsTipi = IsTipi.Backlog;
+    private string FormMesaji = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        GorevServisi.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        GorevServisi.OnChange -= StateHasChanged;
+    }
+
+    private async Task Kapat()
+    {
+        FormMesaji = string.Empty;
+        await OnKapat.InvokeAsync();
+    }
+
+    private void Temizle()
+    {
+        YeniGorevBaslik = string.Empty;
+        YeniGorevAciklama = string.Empty;
+        YeniGorevTarihi = DateTime.Today.AddDays(3);
+        YeniGorevOncelik = Oncelik.Orta;
+        YeniGorevIsTipi = IsTipi.Backlog;
+        FormMesaji = string.Empty;
+    }
+
+    private async Task Kaydet()
+    {
+        var sonuc = GorevServisi.GorevEkle(YeniGorevBaslik, YeniGorevAciklama, YeniGorevTarihi, YeniGorevOncelik, YeniGorevIsTipi);
+        FormMesaji = sonuc.Mesaj;
+
+        if (sonuc.Basarili)
+        {
+            Temizle();
+            await OnKapat.InvokeAsync();
+        }
+    }
+}

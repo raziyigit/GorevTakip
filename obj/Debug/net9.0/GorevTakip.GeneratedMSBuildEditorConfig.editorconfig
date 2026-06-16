@@ -1,0 +1,89 @@
+is_global = true
+build_property.TargetFramework = net9.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = GorevTakip
+build_property.RootNamespace = GorevTakip
+build_property.ProjectDir = C:\Users\razimert.yigit\Desktop\sadece_is\blazor\GorevTakip\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\razimert.yigit\Desktop\sadece_is\blazor\GorevTakip
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/App.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/Ayarlar.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBeWFybGFyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/BildirimAyarModal.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xCaWxkaXJpbUF5YXJNb2RhbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/Error.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/GorevCalismaAlani.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHb3JldkNhbGlzbWFBbGFuaS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/GorevDetayModal.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHb3JldkRldGF5TW9kYWwucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/Gorevler.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHb3Jldmxlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/GorevlerListe.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHb3Jldmxlckxpc3RlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/GorevlerPano.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHb3JldmxlclBhbm8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/GorevOlusturmaModal.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHb3Jldk9sdXN0dXJtYU1vZGFsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/KullaniciProfilModal.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xLdWxsYW5pY2lQcm9maWxNb2RhbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Pages/SprintYonetimi.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTcHJpbnRZb25ldGltaS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-rwpil89tp6
+
+[C:/Users/razimert.yigit/Desktop/sadece_is/blazor/GorevTakip/Components/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTmF2TWVudS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-x9o382qti0

@@ -1,0 +1,202 @@
+@page "/gorevler/pano"
+@using System.Globalization
+@implements IDisposable
+@inject GorevDurumService GorevServisi
+
+<PageTitle>Pano Görünümü</PageTitle>
+
+<div class="tasks-shell">
+    <section class="tasks-hero">
+        <div>
+            <div class="hero-badge">Pano Görünümü</div>
+            <h1>İş Akışı Panosu</h1>
+            <p>Kart bazlı süreç yönetimi. Görevleri sütunlar arasında ilerletin, seçin, düzenleyin ve kapatın.</p>
+        </div>
+
+        <div class="hero-actions">
+            <button class="ghost-action" @onclick="TumFiltreyiSifirla">Filtreleri sıfırla</button>
+            <button class="primary-action" @onclick="PencereyiAc">Yeni madde aç</button>
+        </div>
+    </section>
+
+    <section class="board-card">
+        <div class="board-header">
+            <div>
+                <span class="section-kicker">Kanban alanı</span>
+                <h2>Sütun bazlı yönetim</h2>
+            </div>
+
+            <div class="board-tools">
+                <div class="filter-group">
+                    <button class="@(AktifFiltre == DurumFiltresi.Tumu ? "filter-chip active" : "filter-chip")" @onclick='() => FiltreUygula(DurumFiltresi.Tumu)'>Tümü</button>
+                    <button class="@(AktifFiltre == DurumFiltresi.Aciklar ? "filter-chip active" : "filter-chip")" @onclick='() => FiltreUygula(DurumFiltresi.Aciklar)'>Açık işler</button>
+                    <button class="@(AktifFiltre == DurumFiltresi.Tamamlanan ? "filter-chip active" : "filter-chip")" @onclick='() => FiltreUygula(DurumFiltresi.Tamamlanan)'>Tamamlanan</button>
+                </div>
+
+                <input class="search-box" placeholder="Kart ara..." @bind="AramaMetni" @bind:event="oninput" />
+            </div>
+        </div>
+
+        <div class="kanban-grid">
+            @foreach (var sutun in GorevServisi.PanoSutunlari)
+            {
+                <article class="kanban-column"
+                         @ondragover:preventDefault="true"
+                         @ondragover="SuruklemeyeIzinVer"
+                         @ondrop="() => SutunaBirak(sutun.Durum)">
+                    <div class="kanban-column-header">
+                        <div>
+                            <span class="kanban-title">@sutun.Baslik</span>
+                            <small>@sutun.Aciklama</small>
+                        </div>
+                        <span class="kanban-count">@PanodakiGorevler(sutun.Durum).Count()</span>
+                    </div>
+
+                    <div class="kanban-stack">
+                        @foreach (var gorev in PanodakiGorevler(sutun.Durum))
+                        {
+                            <div class="kanban-task @(SeciliGorev?.Id == gorev.Id ? "selected" : null)"
+                                 draggable="true"
+                                 @ondragstart="() => SuruklemeyiBaslat(gorev)"
+                                 @onclick="() => GorevSec(gorev)">
+                                <div class="kanban-task-top">
+                                    <strong>@gorev.Kod</strong>
+                                    <span class="issue-badge @GorevServisi.IsTipiSinifi(gorev.IsTipi)">@GorevServisi.IsTipiEtiketi(gorev.IsTipi)</span>
+                                </div>
+
+                                <button class="kanban-title-button" @onclick:stopPropagation="true" @onclick="() => DetayPenceresiniAc(gorev)">@gorev.Baslik</button>
+                                <p>@gorev.Aciklama</p>
+
+                                <div class="kanban-meta">
+                                    <span>@GorevServisi.DurumEtiketi(gorev.Durum)</span>
+                                    <span>@TarihEtiketi(gorev.TerminTarihi)</span>
+                                </div>
+
+                                <div class="kanban-detail-row">
+                                    <span class="priority-badge @GorevServisi.OncelikSinifi(gorev.Oncelik)">@GorevServisi.OncelikEtiketi(gorev.Oncelik)</span>
+                                    <span class="kanban-mini-note">Başlığa tıklayarak detay penceresini açın.</span>
+                                </div>
+                            </div>
+                        }
+
+                        @if (!PanodakiGorevler(sutun.Durum).Any())
+                        {
+                            <div class="kanban-empty">Bu sütunda gösterilecek görev yok.</div>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="panel-grid">
+        <article class="summary-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Pano metrikleri</span>
+                    <h2>Akış özeti</h2>
+                </div>
+            </div>
+
+            <div class="summary-list">
+                <div>
+                    <strong>@GorevServisi.DevamEdenSayisi</strong>
+                    <small>Aktif işlenen kart</small>
+                </div>
+                <div>
+                    <strong>@GorevServisi.TamamlananSayisi</strong>
+                    <small>Kapanmış kart</small>
+                </div>
+                <div>
+                    <strong>@GorevServisi.EnYakinTeslim</strong>
+                    <small>En yakın teslim</small>
+                </div>
+            </div>
+        </article>
+
+        <article class="summary-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Çalışma rehberi</span>
+                    <h2>Detay akışı</h2>
+                </div>
+            </div>
+            <div class="summary-list">
+                <div>
+                    <strong>Başlığa tıkla</strong>
+                    <small>Her kartın başlığı profesyonel detay penceresini açar.</small>
+                </div>
+                <div>
+                    <strong>Sürükle bırak kullan</strong>
+                    <small>Kartı süreç sütunları arasında taşıyarak durum güncelle.</small>
+                </div>
+                <div>
+                    <strong>Detayda yönet</strong>
+                    <small>Kaydet, yorum, takip, akış ve bağlantı işlemleri pop-up içinden yürür.</small>
+                </div>
+            </div>
+        </article>
+    </section>
+</div>
+
+<GorevOlusturmaModal AcikMi="@ModalAcik" Baslik="Panoda yeni madde oluştur" KaydetYazisi="Kartı aç" OnKapat="PencereyiKapat" />
+<GorevDetayModal AcikMi="@DetayModalAcik" Gorev="@DetayGorevi" OnKapat="DetayPenceresiniKapat" />
+
+@code {
+    private string AramaMetni = string.Empty;
+    private DurumFiltresi AktifFiltre = DurumFiltresi.Tumu;
+    private bool ModalAcik;
+    private bool DetayModalAcik;
+    private GorevKaydi? SuruklenenGorev;
+    private GorevKaydi? DetayGorevi;
+    private GorevKaydi? SeciliGorev => GorevServisi.SeciliGorev;
+    private IEnumerable<GorevKaydi> FilteredTasks => GorevServisi.FiltrelenmisGorevler(AktifFiltre, AramaMetni);
+
+    protected override void OnInitialized()
+    {
+        GorevServisi.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        GorevServisi.OnChange -= StateHasChanged;
+    }
+
+    private IEnumerable<GorevKaydi> PanodakiGorevler(GorevDurumu durum) => FilteredTasks.Where(x => x.Durum == durum);
+    private void FiltreUygula(DurumFiltresi filtre) => AktifFiltre = filtre;
+    private void TumFiltreyiSifirla()
+    {
+        AktifFiltre = DurumFiltresi.Tumu;
+        AramaMetni = string.Empty;
+    }
+    private void GorevSec(GorevKaydi gorev) => GorevServisi.GorevSec(gorev.Id);
+    private void DetayPenceresiniAc(GorevKaydi gorev)
+    {
+        GorevServisi.GorevSec(gorev.Id);
+        DetayGorevi = gorev;
+        DetayModalAcik = true;
+    }
+    private Task DetayPenceresiniKapat()
+    {
+        DetayModalAcik = false;
+        DetayGorevi = null;
+        return Task.CompletedTask;
+    }
+    private void SuruklemeyiBaslat(GorevKaydi gorev) => SuruklenenGorev = gorev;
+    private void SuruklemeyeIzinVer()
+    {
+    }
+    private void SutunaBirak(GorevDurumu durum)
+    {
+        if (SuruklenenGorev is null)
+        {
+            return;
+        }
+
+        GorevServisi.DurumaTasi(SuruklenenGorev.Id, durum);
+        SuruklenenGorev = null;
+    }
+    private void PencereyiAc() => ModalAcik = true;
+    private void PencereyiKapat() => ModalAcik = false;
+    private static string TarihEtiketi(DateTime tarih) => tarih.ToString("dd MMM yyyy", CultureInfo.GetCultureInfo("tr-TR"));
+}

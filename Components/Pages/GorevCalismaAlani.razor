@@ -1,0 +1,457 @@
+@using System.Globalization
+@implements IDisposable
+@inject GorevDurumService GorevServisi
+@inject NavigationManager NavigationManager
+
+<div class="tasks-shell">
+    <section class="tasks-hero">
+        <div>
+            <div class="hero-badge">Görev Operasyon Merkezi</div>
+            <h1>@Baslik</h1>
+            <p>İş akışını @Baslik.ToLower() üzerinden yönetin, maddeleri türüne göre ayırın ve aksiyonları doğrudan kayıt üstünden çalıştırın.</p>
+        </div>
+
+        <div class="hero-actions">
+            <button class="ghost-action" @onclick="TumFiltreyiSifirla">Filtreleri sıfırla</button>
+            <button class="primary-action" @onclick="PencereyiAc">Yeni madde aç</button>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <article class="metric-card">
+            <span>Toplam iş kalemi</span>
+            <strong>@FilteredTasks.Count()</strong>
+            <small>Geçerli görünüm ve filtreye göre listelenen kayıt</small>
+        </article>
+
+        <article class="metric-card accent-blue">
+            <span>Tamamlanan</span>
+            <strong>@GorevServisi.TamamlananSayisi</strong>
+            <small>@GorevServisi.TamamlanmaOrani% kapanış oranı</small>
+        </article>
+
+        <article class="metric-card accent-amber">
+            <span>Devam eden</span>
+            <strong>@GorevServisi.DevamEdenSayisi</strong>
+            <small>Şu anda işlenen görevler</small>
+        </article>
+
+        <article class="metric-card accent-red">
+            <span>Yüksek öncelik</span>
+            <strong>@GorevServisi.YuksekOncelikSayisi</strong>
+            <small>Yakın takip gerektiren maddeler</small>
+        </article>
+    </section>
+
+    <section class="panel-grid">
+        <article class="board-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Çalışma özeti</span>
+                    <h2>Operasyon durumu</h2>
+                </div>
+            </div>
+
+            <div class="summary-list">
+                <div>
+                    <strong>@GorevServisi.EnYakinTeslim</strong>
+                    <small>En yakın teslim tarihi</small>
+                </div>
+                <div>
+                    <strong>@SeciliKayitDurumu</strong>
+                    <small>Seçili görev durumu</small>
+                </div>
+                <div>
+                    <strong>@Baslik</strong>
+                    <small>Şu an açık çalışma görünümü</small>
+                </div>
+            </div>
+        </article>
+
+        <article class="summary-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Seçili kayıt</span>
+                    <h2>Detay kartı</h2>
+                </div>
+            </div>
+
+            @if (SeciliGorev is not null)
+            {
+                <div class="selected-task-card selected-task-card-standalone">
+                    <div class="selected-task-head">
+                        <strong>@SeciliGorev.Kod</strong>
+                        <span class="priority-badge @GorevServisi.OncelikSinifi(SeciliGorev.Oncelik)">@GorevServisi.OncelikEtiketi(SeciliGorev.Oncelik)</span>
+                    </div>
+                    <h3>@SeciliGorev.Baslik</h3>
+                    <p>@SeciliGorev.Aciklama</p>
+                    <div class="selected-task-meta">
+                        <span>@GorevServisi.DurumEtiketi(SeciliGorev.Durum)</span>
+                        <span class="issue-badge @GorevServisi.IsTipiSinifi(SeciliGorev.IsTipi)">@GorevServisi.IsTipiEtiketi(SeciliGorev.IsTipi)</span>
+                    </div>
+                    <div class="selected-task-actions">
+                        <button class="action-btn" @onclick="() => GeriTasi(SeciliGorev)">Geri al</button>
+                        <button class="action-btn success" @onclick="() => IleriTasi(SeciliGorev)">@IleriButonEtiketi(SeciliGorev)</button>
+                        <button class="action-btn" @onclick="() => DuzenlemeyiBaslat(SeciliGorev)">Düzenle</button>
+                        <button class="action-btn danger" @onclick="() => Sil(SeciliGorev)">Sil</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="selected-task-empty">Detay görmek için görev seçin.</div>
+            }
+        </article>
+    </section>
+
+    <section class="board-card">
+        <div class="board-header">
+            <div>
+                <span class="section-kicker">@Baslik</span>
+                <h2>@IcerikBasligi</h2>
+            </div>
+
+            <div class="board-tools">
+                <div class="filter-group">
+                    <button class="@(AktifFiltre == DurumFiltresi.Tumu ? "filter-chip active" : "filter-chip")"
+                            @onclick='() => FiltreUygula(DurumFiltresi.Tumu)'>
+                        Tümü
+                    </button>
+                    <button class="@(AktifFiltre == DurumFiltresi.Aciklar ? "filter-chip active" : "filter-chip")"
+                            @onclick='() => FiltreUygula(DurumFiltresi.Aciklar)'>
+                        Açık işler
+                    </button>
+                    <button class="@(AktifFiltre == DurumFiltresi.Tamamlanan ? "filter-chip active" : "filter-chip")"
+                            @onclick='() => FiltreUygula(DurumFiltresi.Tamamlanan)'>
+                        Tamamlanan
+                    </button>
+                </div>
+
+                <input class="search-box"
+                       placeholder="Görev ara..."
+                       @bind="AramaMetni"
+                       @bind:event="oninput" />
+            </div>
+        </div>
+
+        @if (AktifGorunum == CalismaGorunumu.Pano)
+        {
+            <div class="kanban-grid">
+                @foreach (var sutun in GorevServisi.PanoSutunlari)
+                {
+                    <article class="kanban-column">
+                        <div class="kanban-column-header">
+                            <div>
+                                <span class="kanban-title">@sutun.Baslik</span>
+                                <small>@sutun.Aciklama</small>
+                            </div>
+                            <span class="kanban-count">@PanodakiGorevler(sutun.Durum).Count()</span>
+                        </div>
+
+                        <div class="kanban-stack">
+                            @foreach (var gorev in PanodakiGorevler(sutun.Durum))
+                            {
+                                <div class="kanban-task @(SeciliGorev?.Id == gorev.Id ? "selected" : null)" @onclick="() => GorevSec(gorev)">
+                                    <div class="kanban-task-top">
+                                        <strong>@gorev.Kod</strong>
+                                        <span class="issue-badge @GorevServisi.IsTipiSinifi(gorev.IsTipi)">@GorevServisi.IsTipiEtiketi(gorev.IsTipi)</span>
+                                    </div>
+
+                                    <h3>@gorev.Baslik</h3>
+                                    <p>@gorev.Aciklama</p>
+
+                                    <div class="kanban-meta">
+                                        <span>@GorevServisi.DurumEtiketi(gorev.Durum)</span>
+                                        <span>@TarihEtiketi(gorev.TerminTarihi)</span>
+                                    </div>
+
+                                    <div class="kanban-actions">
+                                        <button class="action-btn" @onclick:stopPropagation="true" @onclick="() => GeriTasi(gorev)">Geri al</button>
+                                        <button class="action-btn success" @onclick:stopPropagation="true" @onclick="() => IleriTasi(gorev)">@IleriButonEtiketi(gorev)</button>
+                                        <button class="action-btn" @onclick:stopPropagation="true" @onclick="() => DuzenlemeyiBaslat(gorev)">Düzenle</button>
+                                        <button class="action-btn danger" @onclick:stopPropagation="true" @onclick="() => Sil(gorev)">Sil</button>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (!PanodakiGorevler(sutun.Durum).Any())
+                            {
+                                <div class="kanban-empty">Bu sütunda gösterilecek görev yok.</div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="table-shell">
+                <table class="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Durum</th>
+                            <th>İş kalemi</th>
+                            <th>Tür</th>
+                            <th>Öncelik</th>
+                            <th>Termin</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var gorev in FilteredTasks)
+                        {
+                            var duzenlemede = DuzenlenenGorev?.Id == gorev.Id;
+
+                            <tr class="@(duzenlemede ? "row-editing" : SeciliGorev?.Id == gorev.Id ? "row-selected" : null)"
+                                @onclick="() => GorevSec(gorev)">
+                                <td>
+                                    @if (duzenlemede)
+                                    {
+                                        <select @bind="DuzenlemeDurumu">
+                                            @foreach (var durum in Enum.GetValues<GorevDurumu>())
+                                            {
+                                                <option value="@durum">@GorevServisi.DurumEtiketi(durum)</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <button class="state-toggle @GorevServisi.DurumSinifi(gorev.Durum)"
+                                                @onclick:stopPropagation="true"
+                                                @onclick="() => DurumDegistir(gorev)">
+                                            @GorevServisi.DurumEtiketi(gorev.Durum)
+                                        </button>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (duzenlemede)
+                                    {
+                                        <div class="inline-edit-grid">
+                                            <input @bind="DuzenlemeBaslik" @bind:event="oninput" />
+                                            <textarea rows="3" @bind="DuzenlemeAciklama"></textarea>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="task-cell">
+                                            <div class="task-symbol">@gorev.Kod</div>
+                                            <div>
+                                                <strong class="@(gorev.Durum == GorevDurumu.Tamamlandi ? "muted-text" : null)">@gorev.Baslik</strong>
+                                                <small>@gorev.Aciklama</small>
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (duzenlemede)
+                                    {
+                                        <select @bind="DuzenlemeIsTipi">
+                                            @foreach (var tip in Enum.GetValues<IsTipi>())
+                                            {
+                                                <option value="@tip">@GorevServisi.IsTipiEtiketi(tip)</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <span class="issue-badge @GorevServisi.IsTipiSinifi(gorev.IsTipi)">@GorevServisi.IsTipiEtiketi(gorev.IsTipi)</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (duzenlemede)
+                                    {
+                                        <select @bind="DuzenlemeOncelik">
+                                            @foreach (var oncelik in Enum.GetValues<Oncelik>())
+                                            {
+                                                <option value="@oncelik">@GorevServisi.OncelikEtiketi(oncelik)</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <span class="priority-badge @GorevServisi.OncelikSinifi(gorev.Oncelik)">
+                                            @GorevServisi.OncelikEtiketi(gorev.Oncelik)
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (duzenlemede)
+                                    {
+                                        <input type="date" @bind-value="DuzenlemeTarihi" />
+                                    }
+                                    else
+                                    {
+                                        <div class="date-stack">
+                                            <strong>@TarihEtiketi(gorev.TerminTarihi)</strong>
+                                            <small>@gorev.TerminTarihi.ToString("dddd", TrCulture)</small>
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div class="row-actions">
+                                        @if (duzenlemede)
+                                        {
+                                            <button class="action-btn primary-inline" @onclick:stopPropagation="true" @onclick="KaydetDuzenleme">Kaydet</button>
+                                            <button class="action-btn" @onclick:stopPropagation="true" @onclick="() => DuzenlemeyiIptalEt()">İptal</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="action-btn" @onclick:stopPropagation="true" @onclick="() => GeriTasi(gorev)">Geri al</button>
+                                            <button class="action-btn success" @onclick:stopPropagation="true" @onclick="() => IleriTasi(gorev)">@IleriButonEtiketi(gorev)</button>
+                                            <button class="action-btn" @onclick:stopPropagation="true" @onclick="() => DuzenlemeyiBaslat(gorev)">Düzenle</button>
+                                            <button class="action-btn danger" @onclick:stopPropagation="true" @onclick="() => Sil(gorev)">Sil</button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
+
+<GorevOlusturmaModal AcikMi="@ModalAcik"
+                     Baslik="Yeni madde oluştur"
+                     KaydetYazisi="Kaydı aç"
+                     OnKapat="PencereyiKapat" />
+
+@code {
+    [Parameter] public CalismaGorunumu AktifGorunum { get; set; }
+
+    private static readonly CultureInfo TrCulture = CultureInfo.GetCultureInfo("tr-TR");
+
+    private string AramaMetni = string.Empty;
+    private string FormMesaji = string.Empty;
+    private bool ModalAcik;
+
+    private GorevKaydi? DuzenlenenGorev;
+    private string DuzenlemeBaslik = string.Empty;
+    private string DuzenlemeAciklama = string.Empty;
+    private DateTime DuzenlemeTarihi = DateTime.Today;
+    private Oncelik DuzenlemeOncelik = Oncelik.Orta;
+    private GorevDurumu DuzenlemeDurumu = GorevDurumu.Analiz;
+    private IsTipi DuzenlemeIsTipi = IsTipi.Backlog;
+    private DurumFiltresi AktifFiltre = DurumFiltresi.Tumu;
+
+    private string Baslik => AktifGorunum == CalismaGorunumu.Pano ? "Pano görünümü" : "Liste görünümü";
+    private string IcerikBasligi => AktifGorunum == CalismaGorunumu.Pano ? "İş akışı panosu" : "Görev kayıt listesi";
+    private GorevKaydi? SeciliGorev => GorevServisi.SeciliGorev;
+    private string SeciliKayitDurumu => SeciliGorev is null ? "Seçim yok" : GorevServisi.DurumEtiketi(SeciliGorev.Durum);
+    private IEnumerable<GorevKaydi> FilteredTasks => GorevServisi.FiltrelenmisGorevler(AktifFiltre, AramaMetni);
+
+    protected override void OnInitialized()
+    {
+        GorevServisi.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        GorevServisi.OnChange -= StateHasChanged;
+    }
+
+    private IEnumerable<GorevKaydi> PanodakiGorevler(GorevDurumu durum) =>
+        FilteredTasks.Where(x => x.Durum == durum);
+
+    private void PencereyiAc() => ModalAcik = true;
+
+    private void PencereyiKapat() => ModalAcik = false;
+
+    private void GorevSec(GorevKaydi gorev)
+    {
+        GorevServisi.GorevSec(gorev.Id);
+        FormMesaji = $"{gorev.Kod} seçildi.";
+    }
+
+    private void DurumDegistir(GorevKaydi gorev) => FormMesaji = GorevServisi.DurumuDondur(gorev.Id);
+
+    private void IleriTasi(GorevKaydi gorev) => FormMesaji = GorevServisi.IleriTasi(gorev.Id);
+
+    private void GeriTasi(GorevKaydi gorev) => FormMesaji = GorevServisi.GeriTasi(gorev.Id);
+
+    private void Sil(GorevKaydi gorev)
+    {
+        if (DuzenlenenGorev?.Id == gorev.Id)
+        {
+            DuzenlemeyiIptalEt(clearMessage: false);
+        }
+
+        FormMesaji = GorevServisi.Sil(gorev.Id);
+    }
+
+    private void FiltreUygula(DurumFiltresi filtre) => AktifFiltre = filtre;
+
+    private void TumFiltreyiSifirla()
+    {
+        AktifFiltre = DurumFiltresi.Tumu;
+        AramaMetni = string.Empty;
+        FormMesaji = "Filtreler temizlendi.";
+    }
+
+    private void DuzenlemeyiBaslat(GorevKaydi gorev)
+    {
+        GorevServisi.GorevSec(gorev.Id);
+        DuzenlenenGorev = gorev;
+        DuzenlemeBaslik = gorev.Baslik;
+        DuzenlemeAciklama = gorev.Aciklama;
+        DuzenlemeTarihi = gorev.TerminTarihi;
+        DuzenlemeOncelik = gorev.Oncelik;
+        DuzenlemeDurumu = gorev.Durum;
+        DuzenlemeIsTipi = gorev.IsTipi;
+        FormMesaji = $"{gorev.Kod} düzenleme modunda.";
+
+        if (AktifGorunum != CalismaGorunumu.Liste)
+        {
+            NavigationManager.NavigateTo("/gorevler/liste");
+        }
+    }
+
+    private void KaydetDuzenleme()
+    {
+        if (DuzenlenenGorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = GorevServisi.Guncelle(
+            DuzenlenenGorev.Id,
+            DuzenlemeBaslik,
+            DuzenlemeAciklama,
+            DuzenlemeTarihi,
+            DuzenlemeOncelik,
+            DuzenlemeDurumu,
+            DuzenlemeIsTipi);
+
+        if (!FormMesaji.Contains("zorunludur", StringComparison.OrdinalIgnoreCase))
+        {
+            DuzenlemeyiIptalEt(clearMessage: false);
+        }
+    }
+
+    private void DuzenlemeyiIptalEt(bool clearMessage = true)
+    {
+        DuzenlenenGorev = null;
+        DuzenlemeBaslik = string.Empty;
+        DuzenlemeAciklama = string.Empty;
+        DuzenlemeTarihi = DateTime.Today;
+        DuzenlemeOncelik = Oncelik.Orta;
+        DuzenlemeDurumu = GorevDurumu.Analiz;
+        DuzenlemeIsTipi = IsTipi.Backlog;
+
+        if (clearMessage)
+        {
+            FormMesaji = "Düzenleme iptal edildi.";
+        }
+    }
+
+    private string IleriButonEtiketi(GorevKaydi gorev) => GorevServisi.IleriButonEtiketi(gorev.Durum);
+
+    private static string TarihEtiketi(DateTime tarih) => tarih.ToString("dd MMM yyyy", TrCulture);
+}

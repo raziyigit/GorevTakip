@@ -1,0 +1,564 @@
+@page "/sprint-yonetimi"
+@using System.Globalization
+@implements IDisposable
+@inject GorevDurumService GorevServisi
+
+<PageTitle>Sprint Yönetimi</PageTitle>
+
+<div class="overview-shell">
+    <section class="tasks-hero sprint-hero sprint-hero-strong">
+        <div>
+            <div class="hero-badge">Sprint Yönetimi</div>
+            <h1>@AktifSprint.Ad için kontrol paneli</h1>
+            <p>Sprint açılışını, kapanışını, geçmiş performansı ve sonraki sprint planını tek yönetim alanında yönetin.</p>
+        </div>
+
+        <div class="hero-actions">
+            <button class="ghost-action" @onclick="YeniSprintPenceresiniAc">Yeni sprint oluştur</button>
+            <button class="primary-action" @onclick="SprintKapatmaPenceresiniAc">Sprinti kapat</button>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <article class="metric-card">
+            <span>Aktif sprint</span>
+            <strong>@AktifSprint.Ad</strong>
+            <small>@TarihEtiketi(AktifSprint.BaslangicTarihi) - @TarihEtiketi(AktifSprint.BitisTarihi)</small>
+        </article>
+
+        <article class="metric-card accent-blue">
+            <span>Tamamlanma</span>
+            <strong>@SprintTamamlanmaOrani%</strong>
+            <small>@TamamlananSprintGorevleri.Count kayıt kapatıldı</small>
+        </article>
+
+        <article class="metric-card accent-amber">
+            <span>Kalan kapasite</span>
+            <strong>@KalanKapasite</strong>
+            <small>@AktifSprint.Kapasite puan planın içinde kullanılabilir alan</small>
+        </article>
+
+        <article class="metric-card accent-red">
+            <span>Riskli teslim</span>
+            <strong>@RiskliTeslimler.Count</strong>
+            <small>Bugün veya geçmiş terminli açık iş</small>
+        </article>
+    </section>
+
+    <section class="panel-grid">
+        <article class="board-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Sprint sağlığı</span>
+                    <h2>Yürüyen sprint özeti</h2>
+                </div>
+                <span class="inline-chip">@SprintMesaji</span>
+            </div>
+
+            <div class="sprint-progress-shell">
+                <div class="sprint-progress-track">
+                    <div class="sprint-progress-value" style="width:@($"{SprintTamamlanmaOrani}%")"></div>
+                </div>
+                <div class="sprint-progress-meta">
+                    <strong>@SprintTamamlanmaOrani%</strong>
+                    <small>Kapanan iş oranı</small>
+                </div>
+            </div>
+
+            <div class="summary-list">
+                <div>
+                    <strong>@AnalizBekleyenSayisi</strong>
+                    <small>Analiz tarafında bekleyen madde</small>
+                </div>
+                <div>
+                    <strong>@TestKuyruguSayisi</strong>
+                    <small>Teste hazır veya test aşamasındaki kayıt</small>
+                </div>
+                <div>
+                    <strong>@ToplamEfor</strong>
+                    <small>Sprint içindeki toplam efor</small>
+                </div>
+            </div>
+        </article>
+
+        <article class="summary-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Sprint hedefi</span>
+                    <h2>Yönetici odağı</h2>
+                </div>
+            </div>
+
+            <div class="selected-task-card selected-task-card-standalone">
+                <h3>@AktifSprint.Hedef</h3>
+                <p>@BugunOdakMetni</p>
+                <div class="selected-task-meta">
+                    <span>@AktifSprint.Kapasite puan kapasite</span>
+                    <span>@GorevServisi.EnYakinTeslim</span>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="overview-grid sprint-grid-3">
+        <article class="board-card">
+            <div class="board-header">
+                <div>
+                    <span class="section-kicker">Durum dağılımı</span>
+                    <h2>Akış yoğunluğu</h2>
+                </div>
+            </div>
+
+            <div class="sprint-status-list">
+                @foreach (var durum in DurumDagilimi)
+                {
+                    <div class="sprint-status-row">
+                        <div class="sprint-status-head">
+                            <span class="state-toggle @GorevServisi.DurumSinifi(durum.Durum)">@GorevServisi.DurumEtiketi(durum.Durum)</span>
+                            <strong>@durum.Adet</strong>
+                        </div>
+                        <div class="sprint-mini-progress">
+                            <div class="sprint-mini-progress-bar" style="width:@($"{durum.Yuzde}%")"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <article class="board-card">
+            <div class="board-header">
+                <div>
+                    <span class="section-kicker">Takım yükü</span>
+                    <h2>Sorumlu dağılımı</h2>
+                </div>
+            </div>
+
+            <div class="sprint-load-list">
+                @foreach (var kisi in KisiYukleri)
+                {
+                    <div class="sprint-load-card">
+                        <div class="sprint-load-head">
+                            <strong>@kisi.AtananKisi</strong>
+                            <span>@kisi.GorevSayisi görev</span>
+                        </div>
+                        <small>@kisi.ToplamEfor puan planlı efor</small>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <article class="board-card">
+            <div class="board-header">
+                <div>
+                    <span class="section-kicker">Kritik kayıtlar</span>
+                    <h2>Öncelik takibi</h2>
+                </div>
+            </div>
+
+            <div class="sprint-critical-list">
+                @if (KritikKayitlar.Count == 0)
+                {
+                    <div class="detail-empty-box">Yüksek öncelikli açık kayıt bulunmuyor.</div>
+                }
+                else
+                {
+                    @foreach (var gorev in KritikKayitlar)
+                    {
+                        <a class="sprint-critical-card" href="/gorevler/pano">
+                            <div class="sprint-critical-top">
+                                <strong>@gorev.Kod</strong>
+                                <span class="priority-badge @GorevServisi.OncelikSinifi(gorev.Oncelik)">@GorevServisi.OncelikEtiketi(gorev.Oncelik)</span>
+                            </div>
+                            <h3>@gorev.Baslik</h3>
+                            <p>@gorev.AtananKisi • @TarihEtiketi(gorev.TerminTarihi)</p>
+                        </a>
+                    }
+                }
+            </div>
+        </article>
+    </section>
+
+    <section class="panel-grid sprint-management-grid">
+        <article class="board-card">
+            <div class="board-header">
+                <div>
+                    <span class="section-kicker">Geçmiş sprintler</span>
+                    <h2>Kapanan dönemler</h2>
+                </div>
+            </div>
+
+            <div class="sprint-history-list">
+                @foreach (var sprint in GecmisSprintler)
+                {
+                    <div class="sprint-history-card">
+                        <div class="sprint-history-head">
+                            <div>
+                                <strong>@sprint.Ad</strong>
+                                <small>@TarihEtiketi(sprint.BaslangicTarihi) - @TarihEtiketi(sprint.BitisTarihi)</small>
+                            </div>
+                            <span class="sprint-state @GorevServisi.SprintDurumSinifi(sprint.Durum)">@GorevServisi.SprintDurumEtiketi(sprint.Durum)</span>
+                        </div>
+                        <p>@sprint.Hedef</p>
+                        <small>@(string.IsNullOrWhiteSpace(sprint.KapanisNotu) ? "Kapanış notu girilmedi." : sprint.KapanisNotu)</small>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <article class="board-card">
+            <div class="board-header">
+                <div>
+                    <span class="section-kicker">Planlanan sprintler</span>
+                    <h2>Sıradaki dönemler</h2>
+                </div>
+            </div>
+
+            <div class="sprint-history-list">
+                @foreach (var sprint in PlanlananSprintler)
+                {
+                    <div class="sprint-history-card future">
+                        <div class="sprint-history-head">
+                            <div>
+                                <strong>@sprint.Ad</strong>
+                                <small>@TarihEtiketi(sprint.BaslangicTarihi) - @TarihEtiketi(sprint.BitisTarihi)</small>
+                            </div>
+                            <span class="sprint-state @GorevServisi.SprintDurumSinifi(sprint.Durum)">@GorevServisi.SprintDurumEtiketi(sprint.Durum)</span>
+                        </div>
+                        <p>@sprint.Hedef</p>
+                        <div class="sprint-history-actions">
+                            <button class="action-btn" @onclick="() => PlanlananSprintiAktiflestir(sprint.Id)">Aktif yap</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </article>
+    </section>
+
+    <section class="board-card">
+        <div class="board-header">
+            <div>
+                <span class="section-kicker">Yaklaşan teslimler</span>
+                <h2>Sprint iş listesi</h2>
+            </div>
+        </div>
+
+        <div class="table-shell">
+            <table class="tasks-table">
+                <thead>
+                    <tr>
+                        <th>Kayıt</th>
+                        <th>Sorumlu</th>
+                        <th>Durum</th>
+                        <th>Öncelik</th>
+                        <th>Termin</th>
+                        <th>Efor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var gorev in SprintGorevleri.OrderBy(x => x.TerminTarihi))
+                    {
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <div class="task-symbol">@gorev.Kod</div>
+                                    <div>
+                                        <strong>@gorev.Baslik</strong>
+                                        <small>@gorev.Alan</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@gorev.AtananKisi</td>
+                            <td>
+                                <span class="state-toggle @GorevServisi.DurumSinifi(gorev.Durum)">@GorevServisi.DurumEtiketi(gorev.Durum)</span>
+                            </td>
+                            <td>
+                                <span class="priority-badge @GorevServisi.OncelikSinifi(gorev.Oncelik)">@GorevServisi.OncelikEtiketi(gorev.Oncelik)</span>
+                            </td>
+                            <td>@TarihEtiketi(gorev.TerminTarihi)</td>
+                            <td>@gorev.Efor</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@if (YeniSprintModalAcik)
+{
+    <div class="modal-backdrop" @onclick="YeniSprintPenceresiniKapat">
+        <div class="modal-card sprint-action-modal" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div>
+                    <span class="section-kicker">Yeni Sprint</span>
+                    <h2>Yeni sprint oluştur</h2>
+                </div>
+                <button class="modal-close" @onclick="YeniSprintPenceresiniKapat">Kapat</button>
+            </div>
+
+            <div class="form-grid modal-form-grid">
+                <label>
+                    Sprint adı
+                    <input @bind="YeniSprintAdi" @bind:event="oninput" />
+                </label>
+                <label>
+                    Kapasite
+                    <input type="number" @bind="YeniSprintKapasite" />
+                </label>
+                <label>
+                    Başlangıç tarihi
+                    <input type="date" @bind-value="YeniSprintBaslangic" />
+                </label>
+                <label>
+                    Bitiş tarihi
+                    <input type="date" @bind-value="YeniSprintBitis" />
+                </label>
+                <label>
+                    Sprint hedefi
+                    <textarea rows="4" @bind="YeniSprintHedefi"></textarea>
+                </label>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(FormMesaji))
+            {
+                <div class="modal-message">@FormMesaji</div>
+            }
+
+            <div class="modal-actions">
+                <button class="ghost-action" @onclick="YeniSprintSablonuYukle">Şablon yükle</button>
+                <button class="primary-action" @onclick="YeniSprintOlustur">Sprinti oluştur</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (SprintKapatmaModalAcik)
+{
+    <div class="modal-backdrop" @onclick="SprintKapatmaPenceresiniKapat">
+        <div class="modal-card sprint-action-modal" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div>
+                    <span class="section-kicker">Sprint Kapat</span>
+                    <h2>@AktifSprint.Ad sprintini tamamla</h2>
+                </div>
+                <button class="modal-close" @onclick="SprintKapatmaPenceresiniKapat">Kapat</button>
+            </div>
+
+            <div class="form-grid modal-form-grid">
+                <label>
+                    Kapanış notu
+                    <textarea rows="4" @bind="KapanisNotu"></textarea>
+                </label>
+                <label>
+                    Sonraki sprint adı
+                    <input @bind="SonrakiSprintAdi" @bind:event="oninput" />
+                </label>
+                <label>
+                    Sonraki sprint başlangıcı
+                    <input type="date" @bind-value="SonrakiSprintBaslangic" />
+                </label>
+                <label>
+                    Sonraki sprint bitişi
+                    <input type="date" @bind-value="SonrakiSprintBitis" />
+                </label>
+                <label>
+                    Sonraki sprint hedefi
+                    <textarea rows="4" @bind="SonrakiSprintHedefi"></textarea>
+                </label>
+                <label>
+                    Sonraki sprint kapasitesi
+                    <input type="number" @bind="SonrakiSprintKapasite" />
+                </label>
+            </div>
+
+            <div class="settings-toggle-grid sprint-settings-toggle-grid">
+                <button class="@(AciklariSonrakiSprinteTasi ? "settings-toggle-card active" : "settings-toggle-card")" @onclick="AcikIsleriTasimaDurumunuDegistir">
+                    <strong>Açık işleri taşı</strong>
+                    <small>@(AciklariSonrakiSprinteTasi ? "Açık işler sonraki sprintte açılır" : "Açık işler backlog üzerinde kalır")</small>
+                </button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(FormMesaji))
+            {
+                <div class="modal-message">@FormMesaji</div>
+            }
+
+            <div class="modal-actions">
+                <button class="ghost-action" @onclick="SprintKapatmaSablonuYukle">Önerilen kapanış planı</button>
+                <button class="primary-action" @onclick="AktifSprintiKapat">Sprinti kapat</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo TrCulture = CultureInfo.GetCultureInfo("tr-TR");
+
+    private bool YeniSprintModalAcik;
+    private bool SprintKapatmaModalAcik;
+    private bool AciklariSonrakiSprinteTasi = true;
+    private string FormMesaji = string.Empty;
+
+    private string YeniSprintAdi = "Sprint 14";
+    private DateTime YeniSprintBaslangic = DateTime.Today.AddDays(14);
+    private DateTime YeniSprintBitis = DateTime.Today.AddDays(28);
+    private string YeniSprintHedefi = "Yeni sprint içinde planlı geliştirme ve test yükünü dengeli başlat.";
+    private int YeniSprintKapasite = 26;
+
+    private string KapanisNotu = "Sprint hedefleri tamamlandı, açık işlerin kalan kısmı sonraki döneme taşınacak.";
+    private string SonrakiSprintAdi = "Sprint 14";
+    private DateTime SonrakiSprintBaslangic = DateTime.Today.AddDays(14);
+    private DateTime SonrakiSprintBitis = DateTime.Today.AddDays(28);
+    private string SonrakiSprintHedefi = "Açık işlerin devamını kontrollü şekilde teslim etmek ve yeni kritik maddeleri almak.";
+    private int SonrakiSprintKapasite = 26;
+
+    private SprintKaydi AktifSprint => GorevServisi.AktifSprintKaydi ?? new SprintKaydi
+    {
+        Ad = "Backlog",
+        BaslangicTarihi = DateTime.Today,
+        BitisTarihi = DateTime.Today,
+        Hedef = "Aktif sprint bulunamadı.",
+        Kapasite = 0,
+        Durum = SprintDurumu.Planlandi
+    };
+
+    private List<GorevKaydi> SprintGorevleri => GorevServisi.SprintGorevleri(AktifSprint.Ad).ToList();
+    private List<GorevKaydi> TamamlananSprintGorevleri => SprintGorevleri.Where(x => x.Durum == GorevDurumu.Tamamlandi).ToList();
+    private List<GorevKaydi> RiskliTeslimler => SprintGorevleri.Where(x => x.Durum != GorevDurumu.Tamamlandi && x.TerminTarihi.Date <= DateTime.Today).ToList();
+    private List<GorevKaydi> KritikKayitlar => SprintGorevleri.Where(x => x.Oncelik == Oncelik.Yuksek && x.Durum != GorevDurumu.Tamamlandi).OrderBy(x => x.TerminTarihi).ToList();
+    private List<SprintKaydi> GecmisSprintler => GorevServisi.Sprintler.Where(x => x.Durum == SprintDurumu.Tamamlandi).ToList();
+    private List<SprintKaydi> PlanlananSprintler => GorevServisi.Sprintler.Where(x => x.Durum == SprintDurumu.Planlandi).ToList();
+
+    private int SprintTamamlanmaOrani => SprintGorevleri.Count == 0 ? 0 : (int)Math.Round(TamamlananSprintGorevleri.Count * 100d / SprintGorevleri.Count);
+    private int AnalizBekleyenSayisi => SprintGorevleri.Count(x => x.Durum is GorevDurumu.Analiz or GorevDurumu.AnalizTamamlandi);
+    private int TestKuyruguSayisi => SprintGorevleri.Count(x => x.Durum is GorevDurumu.TesteHazir or GorevDurumu.Test);
+    private int ToplamEfor => SprintGorevleri.Sum(x => x.Efor);
+    private int KalanKapasite => Math.Max(0, AktifSprint.Kapasite - ToplamEfor);
+
+    private string SprintMesaji => SprintTamamlanmaOrani switch
+    {
+        >= 80 => "Sprint planı rayında ilerliyor",
+        >= 50 => "Sprintte kontrollü ilerleme var",
+        _ => "Sprintte yakın takip gerekli"
+    };
+
+    private string BugunOdakMetni => RiskliTeslimler.Count == 0
+        ? "Bugün için kritik teslim baskısı görünmüyor. Planlanan sprint açılışı ve kapasite hazırlığına odaklanabilirsiniz."
+        : $"{RiskliTeslimler.Count} kayıt bugün veya geçmiş terminli durumda. Sprint kapatmadan önce bu maddelerin akışını netleştirmek faydalı olur.";
+
+    private IEnumerable<SprintDurumOzet> DurumDagilimi =>
+        Enum.GetValues<GorevDurumu>()
+            .Select(durum =>
+            {
+                var adet = SprintGorevleri.Count(x => x.Durum == durum);
+                var yuzde = SprintGorevleri.Count == 0 ? 0 : (int)Math.Round(adet * 100d / SprintGorevleri.Count);
+                return new SprintDurumOzet(durum, adet, yuzde);
+            });
+
+    private IEnumerable<SprintKisiYuku> KisiYukleri =>
+        SprintGorevleri
+            .GroupBy(x => x.AtananKisi)
+            .Select(x => new SprintKisiYuku(x.Key, x.Count(), x.Sum(y => y.Efor)))
+            .OrderByDescending(x => x.GorevSayisi)
+            .ThenByDescending(x => x.ToplamEfor);
+
+    protected override void OnInitialized()
+    {
+        GorevServisi.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        GorevServisi.OnChange -= StateHasChanged;
+    }
+
+    private void YeniSprintPenceresiniAc()
+    {
+        YeniSprintModalAcik = true;
+        SprintKapatmaModalAcik = false;
+        FormMesaji = string.Empty;
+    }
+
+    private void YeniSprintPenceresiniKapat()
+    {
+        YeniSprintModalAcik = false;
+        FormMesaji = string.Empty;
+    }
+
+    private void SprintKapatmaPenceresiniAc()
+    {
+        SprintKapatmaModalAcik = true;
+        YeniSprintModalAcik = false;
+        FormMesaji = string.Empty;
+    }
+
+    private void SprintKapatmaPenceresiniKapat()
+    {
+        SprintKapatmaModalAcik = false;
+        FormMesaji = string.Empty;
+    }
+
+    private void YeniSprintSablonuYukle()
+    {
+        YeniSprintAdi = "Sprint 15";
+        YeniSprintBaslangic = DateTime.Today.AddDays(29);
+        YeniSprintBitis = DateTime.Today.AddDays(43);
+        YeniSprintHedefi = "Backlog ve yeni kritik talepleri kapasite sınırı içinde dengeli başlat.";
+        YeniSprintKapasite = 28;
+        FormMesaji = "Önerilen sprint şablonu yüklendi.";
+    }
+
+    private void SprintKapatmaSablonuYukle()
+    {
+        KapanisNotu = "Sprint hedefleri genel olarak tamamlandı, kalan açık maddeler sıradaki sprintte devam edecek.";
+        SonrakiSprintAdi = "Sprint 14";
+        SonrakiSprintBaslangic = DateTime.Today.AddDays(14);
+        SonrakiSprintBitis = DateTime.Today.AddDays(28);
+        SonrakiSprintHedefi = "Taşınan açık işlerle birlikte yeni kritik testleri kontrollü şekilde kapat.";
+        SonrakiSprintKapasite = 26;
+        FormMesaji = "Önerilen sprint kapanış planı yüklendi.";
+    }
+
+    private void YeniSprintOlustur()
+    {
+        FormMesaji = GorevServisi.SprintOlustur(YeniSprintAdi, YeniSprintBaslangic, YeniSprintBitis, YeniSprintHedefi, YeniSprintKapasite);
+        if (!FormMesaji.Contains("boş", StringComparison.OrdinalIgnoreCase) &&
+            !FormMesaji.Contains("önce", StringComparison.OrdinalIgnoreCase) &&
+            !FormMesaji.Contains("mevcut", StringComparison.OrdinalIgnoreCase))
+        {
+            YeniSprintModalAcik = false;
+        }
+    }
+
+    private void AktifSprintiKapat()
+    {
+        FormMesaji = GorevServisi.AktifSprintiKapat(
+            KapanisNotu,
+            AciklariSonrakiSprinteTasi,
+            SonrakiSprintAdi,
+            SonrakiSprintBaslangic,
+            SonrakiSprintBitis,
+            SonrakiSprintHedefi,
+            SonrakiSprintKapasite);
+
+        if (!FormMesaji.Contains("bulunamadı", StringComparison.OrdinalIgnoreCase) &&
+            !FormMesaji.Contains("boş", StringComparison.OrdinalIgnoreCase) &&
+            !FormMesaji.Contains("önce", StringComparison.OrdinalIgnoreCase) &&
+            !FormMesaji.Contains("mevcut", StringComparison.OrdinalIgnoreCase))
+        {
+            SprintKapatmaModalAcik = false;
+        }
+    }
+
+    private void PlanlananSprintiAktiflestir(int sprintId)
+    {
+        FormMesaji = GorevServisi.PlanlananSprintiAktiflestir(sprintId);
+    }
+
+    private void AcikIsleriTasimaDurumunuDegistir() => AciklariSonrakiSprinteTasi = !AciklariSonrakiSprinteTasi;
+
+    private static string TarihEtiketi(DateTime tarih) => tarih.ToString("dd MMM yyyy", TrCulture);
+
+    private sealed record SprintDurumOzet(GorevDurumu Durum, int Adet, int Yuzde);
+    private sealed record SprintKisiYuku(string AtananKisi, int GorevSayisi, int ToplamEfor);
+}

@@ -1,0 +1,429 @@
+@using System.Globalization
+@inject GorevDurumService GorevServisi
+@inject NavigationManager NavigationManager
+
+@if (AcikMi && Gorev is not null)
+{
+    <div class="modal-backdrop detail-modal-backdrop" @onclick="Kapat">
+        <div class="modal-card detail-modal-card" @onclick:stopPropagation="true">
+            <div class="detail-modal-header">
+                <div>
+                    <div class="detail-modal-breadcrumb">
+                        <span class="issue-badge @GorevServisi.IsTipiSinifi(DetayIsTipi)">@GorevServisi.IsTipiEtiketi(DetayIsTipi)</span>
+                        <span>@Gorev.Kod</span>
+                    </div>
+                    <input class="detail-title-input" @bind="DetayBaslik" @bind:event="oninput" />
+                </div>
+
+                <div class="detail-toolbar">
+                    <button class="ghost-action" @onclick="TakipDurumunuDegistir">
+                        @(Gorev.TakipteMi ? "Takibi bırak" : "Takip et")
+                    </button>
+                    <button class="ghost-action" @onclick="BaglantiBilgisiHazirla">Bağlantı kopyala</button>
+                    <button class="ghost-action" @onclick="GecmisiGoster">Geçmiş</button>
+                    <button class="primary-action" @onclick="Kaydet">Kaydet ve kapat</button>
+                    <button class="modal-close" @onclick="Kapat">Kapat</button>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(FormMesaji))
+            {
+                <div class="detail-inline-message">@FormMesaji</div>
+            }
+
+            <div class="detail-top-grid">
+                <div class="detail-top-item">
+                    <span>Durum</span>
+                    <button class="state-toggle @GorevServisi.DurumSinifi(DetayDurumu)" @onclick="DurumuDondur">
+                        @GorevServisi.DurumEtiketi(DetayDurumu)
+                    </button>
+                </div>
+                <div class="detail-top-item">
+                    <span>Sebep</span>
+                    <strong>@SebepEtiketi</strong>
+                </div>
+                <div class="detail-top-item">
+                    <span>Alan</span>
+                    <input @bind="DetayAlan" @bind:event="oninput" />
+                </div>
+                <div class="detail-top-item">
+                    <span>İterasyon</span>
+                    <input @bind="DetayIterasyon" @bind:event="oninput" />
+                </div>
+            </div>
+
+            <div class="detail-modal-layout">
+                <section class="detail-main-column">
+                    <article class="detail-panel">
+                        <div class="detail-section-header">
+                            <h3>Açıklama</h3>
+                            <button class="action-btn" @onclick="AciklamaSablonuEkle">Şablon ekle</button>
+                        </div>
+                        <textarea class="detail-textarea" rows="6" @bind="DetayAciklama"></textarea>
+                    </article>
+
+                    <article class="detail-panel">
+                        <div class="detail-section-header">
+                            <h3>Kabul Kriterleri</h3>
+                            <button class="action-btn" @onclick="KabulKriteriSablonuEkle">Madde ekle</button>
+                        </div>
+                        <textarea class="detail-textarea" rows="6" @bind="DetayKabulKriterleri"></textarea>
+                    </article>
+
+                    <article class="detail-panel">
+                        <div class="detail-section-header">
+                            <h3>Tartışma</h3>
+                            <span class="inline-chip">@Gorev.Yorumlar.Count yorum</span>
+                        </div>
+
+                        <div class="detail-comments">
+                            @if (Gorev.Yorumlar.Count == 0)
+                            {
+                                <div class="detail-empty-box">Henüz yorum eklenmedi.</div>
+                            }
+                            else
+                            {
+                                @foreach (var yorum in Gorev.Yorumlar)
+                                {
+                                    <div class="detail-comment">
+                                        <div class="detail-comment-head">
+                                            <strong>@yorum.Yazar</strong>
+                                            <span>@yorum.Tarih.ToString("dd MMM yyyy HH:mm", TrCulture)</span>
+                                        </div>
+                                        <p>@yorum.Metin</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <div class="detail-comment-composer">
+                            <input @bind="YeniYorumYazari" @bind:event="oninput" placeholder="Yorum sahibi" />
+                            <textarea rows="3" @bind="YeniYorumMetni" placeholder="Yorum ekleyin, bağlantı veya karar notu yazın"></textarea>
+                            <div class="detail-inline-actions">
+                                <button class="action-btn" @onclick="YorumAlaniniTemizle">Temizle</button>
+                                <button class="primary-action" @onclick="YorumEkle">Yorum ekle</button>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <aside class="detail-side-column">
+                    <article class="detail-panel">
+                        <h3>Detaylar</h3>
+                        <div class="detail-field-grid">
+                            <label>
+                                Atanan kişi
+                                <input @bind="DetayAtananKisi" @bind:event="oninput" />
+                            </label>
+                            <label>
+                                Tür
+                                <select @bind="DetayIsTipi">
+                                    @foreach (var tip in Enum.GetValues<IsTipi>())
+                                    {
+                                        <option value="@tip">@GorevServisi.IsTipiEtiketi(tip)</option>
+                                    }
+                                </select>
+                            </label>
+                            <label>
+                                Öncelik
+                                <select @bind="DetayOncelik">
+                                    @foreach (var oncelik in Enum.GetValues<Oncelik>())
+                                    {
+                                        <option value="@oncelik">@GorevServisi.OncelikEtiketi(oncelik)</option>
+                                    }
+                                </select>
+                            </label>
+                            <label>
+                                Durum
+                                <select @bind="DetayDurumu">
+                                    @foreach (var durum in Enum.GetValues<GorevDurumu>())
+                                    {
+                                        <option value="@durum">@GorevServisi.DurumEtiketi(durum)</option>
+                                    }
+                                </select>
+                            </label>
+                            <label>
+                                Termin
+                                <input type="date" @bind-value="DetayTerminTarihi" />
+                            </label>
+                            <label>
+                                Değer alanı
+                                <input @bind="DetayDegerAlani" @bind:event="oninput" />
+                            </label>
+                            <label>
+                                İş değeri
+                                <input type="number" @bind="DetayIsDegeri" />
+                            </label>
+                            <label>
+                                Efor
+                                <input type="number" @bind="DetayEfor" />
+                            </label>
+                        </div>
+                    </article>
+
+                    <article class="detail-panel">
+                        <div class="detail-section-header">
+                            <h3>Akış işlemleri</h3>
+                        </div>
+                        <div class="detail-stack-buttons">
+                            <button class="action-btn" disabled="@(DetayDurumu == GorevDurumu.Analiz)" @onclick="GeriTasi">Geri al</button>
+                            <button class="action-btn success" @onclick="IleriTasi">@GorevServisi.IleriButonEtiketi(DetayDurumu)</button>
+                            <button class="action-btn" @onclick="ListeyeGit">Liste görünümünde aç</button>
+                            <button class="action-btn danger" @onclick="Sil">Maddeyi sil</button>
+                        </div>
+                    </article>
+
+                    <article class="detail-panel">
+                        <div class="detail-section-header">
+                            <h3>Geliştirme</h3>
+                            <button class="action-btn" @onclick="GelistirmeBaglantisiEkle">Bağlantı ekle</button>
+                        </div>
+                        <div class="detail-info-box">
+                            İş kalemi için geliştirme bağlantısı, dal referansı veya commit notu ekleyebilirsiniz.
+                        </div>
+                    </article>
+
+                    <article class="detail-panel">
+                        <div class="detail-section-header">
+                            <h3>İlişkili işler</h3>
+                            <button class="action-btn" @onclick="IliskiliIsEkle">İş bağla</button>
+                        </div>
+                        <div class="detail-info-box">
+                            Bu kayıt için üst madde, alt madde veya bağımlı iş bağlantısı oluşturabilirsiniz.
+                        </div>
+                    </article>
+                </aside>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo TrCulture = CultureInfo.GetCultureInfo("tr-TR");
+
+    [Parameter] public bool AcikMi { get; set; }
+    [Parameter] public GorevKaydi? Gorev { get; set; }
+    [Parameter] public EventCallback OnKapat { get; set; }
+
+    private int YuklenenGorevId;
+    private string FormMesaji = string.Empty;
+    private string DetayBaslik = string.Empty;
+    private string DetayAciklama = string.Empty;
+    private string DetayKabulKriterleri = string.Empty;
+    private string DetayAtananKisi = string.Empty;
+    private string DetayAlan = string.Empty;
+    private string DetayIterasyon = string.Empty;
+    private string DetayDegerAlani = string.Empty;
+    private string YeniYorumYazari = "Ekip Üyesi";
+    private string YeniYorumMetni = string.Empty;
+    private DateTime DetayTerminTarihi = DateTime.Today;
+    private Oncelik DetayOncelik = Oncelik.Orta;
+    private GorevDurumu DetayDurumu = GorevDurumu.Analiz;
+    private IsTipi DetayIsTipi = IsTipi.Backlog;
+    private int DetayIsDegeri;
+    private int DetayEfor;
+
+    private string SebepEtiketi => Gorev?.Sebep ?? "Durum bilgisi yok";
+
+    protected override void OnParametersSet()
+    {
+        if (!AcikMi || Gorev is null || Gorev.Id == YuklenenGorevId)
+        {
+            return;
+        }
+
+        YuklenenGorevId = Gorev.Id;
+        DetayBaslik = Gorev.Baslik;
+        DetayAciklama = Gorev.Aciklama;
+        DetayKabulKriterleri = Gorev.KabulKriterleri;
+        DetayAtananKisi = Gorev.AtananKisi;
+        DetayAlan = Gorev.Alan;
+        DetayIterasyon = Gorev.Iterasyon;
+        DetayDegerAlani = Gorev.DegerAlani;
+        DetayTerminTarihi = Gorev.TerminTarihi;
+        DetayOncelik = Gorev.Oncelik;
+        DetayDurumu = Gorev.Durum;
+        DetayIsTipi = Gorev.IsTipi;
+        DetayIsDegeri = Gorev.IsDegeri;
+        DetayEfor = Gorev.Efor;
+        FormMesaji = string.Empty;
+    }
+
+    private async Task Kapat()
+    {
+        FormMesaji = string.Empty;
+        YuklenenGorevId = 0;
+        await OnKapat.InvokeAsync();
+    }
+
+    private async Task Kaydet()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = GorevServisi.DetayGuncelle(
+            Gorev.Id,
+            DetayBaslik,
+            DetayAciklama,
+            DetayKabulKriterleri,
+            DetayAtananKisi,
+            DetayAlan,
+            DetayIterasyon,
+            DetayTerminTarihi,
+            DetayOncelik,
+            DetayDurumu,
+            DetayIsTipi,
+            DetayIsDegeri,
+            DetayEfor,
+            DetayDegerAlani);
+
+        if (!FormMesaji.Contains("zorunludur", StringComparison.OrdinalIgnoreCase))
+        {
+            await OnKapat.InvokeAsync();
+        }
+    }
+
+    private void DurumuDondur()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = GorevServisi.DurumuDondur(Gorev.Id);
+        DetayDurumu = Gorev.Durum;
+    }
+
+    private void TakipDurumunuDegistir()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = GorevServisi.TakipDurumunuDegistir(Gorev.Id);
+    }
+
+    private void BaglantiBilgisiHazirla()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = $"{Gorev.Kod} bağlantısı kopyalamaya hazır: /gorevler/{Gorev.Kod.ToLowerInvariant()}";
+    }
+
+    private void GecmisiGoster()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = $"{Gorev.Kod} için son durum geçişi: {GorevServisi.DurumEtiketi(Gorev.Durum)}.";
+    }
+
+    private void AciklamaSablonuEkle()
+    {
+        DetayAciklama = string.IsNullOrWhiteSpace(DetayAciklama)
+            ? "İş kapsamı:\nBeklenen çıktı:\nTeknik notlar:"
+            : $"{DetayAciklama}\n\nBeklenen çıktı:";
+        FormMesaji = "Açıklama alanına şablon eklendi.";
+    }
+
+    private void KabulKriteriSablonuEkle()
+    {
+        DetayKabulKriterleri = string.IsNullOrWhiteSpace(DetayKabulKriterleri)
+            ? "Madde 1\nMadde 2\nMadde 3"
+            : $"{DetayKabulKriterleri}\nYeni kriter";
+        FormMesaji = "Kabul kriteri satırı eklendi.";
+    }
+
+    private void YorumAlaniniTemizle()
+    {
+        YeniYorumMetni = string.Empty;
+        FormMesaji = "Yorum alanı temizlendi.";
+    }
+
+    private void YorumEkle()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = GorevServisi.YorumEkle(Gorev.Id, YeniYorumYazari, YeniYorumMetni);
+        if (!FormMesaji.Contains("boş", StringComparison.OrdinalIgnoreCase))
+        {
+            YeniYorumMetni = string.Empty;
+        }
+    }
+
+    private void GeriTasi()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = GorevServisi.GeriTasi(Gorev.Id);
+        DetayDurumu = Gorev.Durum;
+    }
+
+    private void IleriTasi()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = GorevServisi.IleriTasi(Gorev.Id);
+        DetayDurumu = Gorev.Durum;
+    }
+
+    private async Task ListeyeGit()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        GorevServisi.GorevSec(Gorev.Id);
+        await OnKapat.InvokeAsync();
+        NavigationManager.NavigateTo("/gorevler/liste");
+    }
+
+    private async Task Sil()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        GorevServisi.Sil(Gorev.Id);
+        await OnKapat.InvokeAsync();
+    }
+
+    private void GelistirmeBaglantisiEkle()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = $"{Gorev.Kod} için geliştirme bağlantısı alanı aktif edildi.";
+    }
+
+    private void IliskiliIsEkle()
+    {
+        if (Gorev is null)
+        {
+            return;
+        }
+
+        FormMesaji = $"{Gorev.Kod} için ilişkili iş bağlama akışı hazır.";
+    }
+}

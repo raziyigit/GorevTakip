@@ -1,0 +1,98 @@
+@page "/"
+@inject GorevDurumService GorevServisi
+
+<PageTitle>Genel Bakış</PageTitle>
+
+<div class="azdo-home-shell">
+    <section class="azdo-home-banner">
+        <span class="azdo-home-banner-icon">i</span>
+        <span>@BannerMesaji</span>
+    </section>
+
+    <section class="azdo-home-header">
+        <div class="azdo-home-project-mark">E</div>
+        <div>
+            <h1>GörevTakip</h1>
+            <p>Ürün geliştirme, sprint takibi ve iş öğesi yönetimi için merkezi çalışma alanı.</p>
+        </div>
+    </section>
+
+    <section class="azdo-home-grid">
+        <article class="overview-card azdo-overview-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Bu proje hakkında</span>
+                    <h2>Kurumsal iş takibi için tek merkez</h2>
+                </div>
+                <a class="ghost-action" href="/gorevler">İş öğelerine git</a>
+            </div>
+
+            <div class="summary-list azdo-summary-list">
+                <div>
+                    <strong>İş Öğeleri</strong>
+                    <p>Backlog, bug, ana madde ve ek madde kayıtları tek yapıda yönetilir.</p>
+                </div>
+                <div>
+                    <strong>Panolar</strong>
+                    <p>Sürükle bırak akışı ile analizden tamamlanana kadar tüm durumlar görünür.</p>
+                </div>
+                <div>
+                    <strong>Sprint Yönetimi</strong>
+                    <p>Yeni sprint açma, aktif sprinti kapatma ve geçmiş sprintleri izleme hazırdır.</p>
+                </div>
+            </div>
+        </article>
+
+        <div class="azdo-side-stack">
+            <article class="overview-card azdo-stats-card">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-kicker">Proje istatistikleri</span>
+                        <h2>Son 7 gün</h2>
+                    </div>
+                    <button class="ghost-action" @onclick="DonemMesajiGoster">Dönem: Son 7 gün</button>
+                </div>
+
+                <div class="azdo-stat-grid">
+                    <div class="azdo-stat-item">
+                        <span>Oluşturulan iş öğeleri</span>
+                        <strong>@GorevServisi.ToplamGorevSayisi</strong>
+                    </div>
+                    <div class="azdo-stat-item">
+                        <span>Tamamlanan iş öğeleri</span>
+                        <strong>@GorevServisi.TamamlananSayisi</strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="overview-card azdo-members-card">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-kicker">Üyeler</span>
+                        <h2>Proje ekibi</h2>
+                    </div>
+                    <span class="inline-chip">27 kişi</span>
+                </div>
+
+                <div class="azdo-member-row">
+                    <span class="azdo-member-avatar">MY</span>
+                    <span class="azdo-member-avatar alt-red">GE</span>
+                    <span class="azdo-member-avatar alt-orange">EK</span>
+                    <span class="azdo-member-avatar alt-green">EY</span>
+                    <span class="azdo-member-avatar alt-blue">SY</span>
+                    <span class="azdo-member-avatar alt-purple">NÇ</span>
+                </div>
+            </article>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string BannerMesaji { get; set; } =
+        "Takvim görünümü Boards menüsü altına taşındı. Sprint, pano ve iş öğeleri alanları güncel yapıda kullanılabilir.";
+
+    private void DonemMesajiGoster()
+    {
+        BannerMesaji = "İstatistik dönemi seçici hazır. Ayrıntılı rapor filtreleri bir sonraki adımda bağlanabilir.";
+    }
+}

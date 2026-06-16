@@ -1,0 +1,184 @@
+@if (AcikMi)
+{
+    <div class="modal-backdrop profile-modal-backdrop" @onclick="Kapat">
+        <div class="modal-card profile-modal-card notification-modal-card" @onclick:stopPropagation="true">
+            <div class="profile-modal-header">
+                <h2>Bildirim ayarları</h2>
+                <button class="profile-close" @onclick="Kapat">×</button>
+            </div>
+
+            <div class="profile-identity">
+                <div class="profile-avatar notification-avatar">BI</div>
+                <div>
+                    <strong>İş akışı bildirimleri</strong>
+                    <small>Görev, sprint ve takip edilen kayıt bildirim tercihleri</small>
+                </div>
+            </div>
+
+            <div class="profile-tabs">
+                <button class="@(AktifSekme == BildirimSekmesi.Kanal ? "profile-tab active" : "profile-tab")" @onclick='() => SekmeDegistir(BildirimSekmesi.Kanal)'>KANAL</button>
+                <button class="@(AktifSekme == BildirimSekmesi.Olay ? "profile-tab active" : "profile-tab")" @onclick='() => SekmeDegistir(BildirimSekmesi.Olay)'>OLAYLAR</button>
+                <button class="@(AktifSekme == BildirimSekmesi.Ozet ? "profile-tab active" : "profile-tab")" @onclick='() => SekmeDegistir(BildirimSekmesi.Ozet)'>ÖZET</button>
+            </div>
+
+            @if (AktifSekme == BildirimSekmesi.Kanal)
+            {
+                <div class="profile-panel">
+                    <div class="profile-section-title">TESLİM KANALLARI</div>
+                    <div class="notification-grid">
+                        <button class="@(UygulamaIci ? "settings-toggle-card active" : "settings-toggle-card")" @onclick="UygulamaIciDegistir">
+                            <strong>Uygulama içi bildirim</strong>
+                            <small>@(UygulamaIci ? "Açık" : "Kapalı")</small>
+                        </button>
+                        <button class="@(EpostaBildirimleri ? "settings-toggle-card active" : "settings-toggle-card")" @onclick="EpostaDegistir">
+                            <strong>E-posta bildirimleri</strong>
+                            <small>@(EpostaBildirimleri ? "Açık" : "Kapalı")</small>
+                        </button>
+                        <button class="@(GunlukOzet ? "settings-toggle-card active" : "settings-toggle-card")" @onclick="GunlukOzetDegistir">
+                            <strong>Günlük özet</strong>
+                            <small>@(GunlukOzet ? "Her akşam gönder" : "Kapalı")</small>
+                        </button>
+                    </div>
+
+                    <div class="profile-form-grid notification-form-grid">
+                        <label>
+                            Tercih edilen kanal
+                            <select @bind="TercihKanal">
+                                <option value="Uygulama içi">Uygulama içi</option>
+                                <option value="E-posta">E-posta</option>
+                                <option value="Her ikisi">Her ikisi</option>
+                            </select>
+                        </label>
+                        <label>
+                            Sessiz saatler
+                            <select @bind="SessizSaat">
+                                <option value="22:00 - 08:00">22:00 - 08:00</option>
+                                <option value="Yok">Yok</option>
+                                <option value="20:00 - 09:00">20:00 - 09:00</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            }
+            else if (AktifSekme == BildirimSekmesi.Olay)
+            {
+                <div class="profile-panel">
+                    <div class="profile-section-title">BİLDİRİM TETİKLEYİCİLERİ</div>
+                    <div class="notification-check-list">
+                        <button class="notification-check-item @(AtamaBildirimleri ? "active" : null)" @onclick="AtamaBildirimleriniDegistir">
+                            <strong>Bana atanan işler</strong>
+                            <small>Yeni görev atandığında ve atama değiştiğinde haber ver</small>
+                        </button>
+                        <button class="notification-check-item @(DurumDegisiklikleri ? "active" : null)" @onclick="DurumDegisiklikleriniDegistir">
+                            <strong>Durum değişiklikleri</strong>
+                            <small>Takip ettiğim işlerde durum sütunu değiştiğinde bildir</small>
+                        </button>
+                        <button class="notification-check-item @(YorumVeBahsetmeler ? "active" : null)" @onclick="YorumlariDegistir">
+                            <strong>Yorum ve bahsetmeler</strong>
+                            <small>Yorum aldığımda veya @@ ile anıldığımda anlık göster</small>
+                        </button>
+                        <button class="notification-check-item @(SprintRiskleri ? "active" : null)" @onclick="SprintRiskleriniDegistir">
+                            <strong>Sprint riski ve gecikmeler</strong>
+                            <small>Termin gecikmesi, WIP limiti ve test kuyruğu sıkışmalarını öne çıkar</small>
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="profile-panel">
+                    <div class="profile-section-title">ÖZET PLANI</div>
+                    <div class="profile-form-grid notification-form-grid">
+                        <label>
+                            Özet sıklığı
+                            <select @bind="OzetSikligi">
+                                <option value="Her gün">Her gün</option>
+                                <option value="Haftada 3 gün">Haftada 3 gün</option>
+                                <option value="Haftalık">Haftalık</option>
+                            </select>
+                        </label>
+                        <label>
+                            Özet saati
+                            <select @bind="OzetSaati">
+                                <option value="17:30">17:30</option>
+                                <option value="18:00">18:00</option>
+                                <option value="09:00">09:00</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="detail-info-box notification-info-box">
+                        Özet içinde: bana atanan açık işler, yaklaşan teslimler, takip edilen kritik kayıtlar ve sprint riskleri yer alır.
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(FormMesaji))
+            {
+                <div class="profile-message">@FormMesaji</div>
+            }
+
+            <div class="profile-actions">
+                <button class="primary-action" @onclick="Kaydet">Değişiklikleri kaydet</button>
+                <button class="ghost-action" @onclick="Kapat">İptal</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool AcikMi { get; set; }
+    [Parameter] public EventCallback OnKapat { get; set; }
+    [Parameter] public EventCallback<string> OnKaydetildi { get; set; }
+
+    private BildirimSekmesi AktifSekme = BildirimSekmesi.Kanal;
+    private string FormMesaji = string.Empty;
+
+    private bool UygulamaIci = true;
+    private bool EpostaBildirimleri = true;
+    private bool GunlukOzet = true;
+    private string TercihKanal = "Her ikisi";
+    private string SessizSaat = "22:00 - 08:00";
+
+    private bool AtamaBildirimleri = true;
+    private bool DurumDegisiklikleri = true;
+    private bool YorumVeBahsetmeler = true;
+    private bool SprintRiskleri = true;
+
+    private string OzetSikligi = "Her gün";
+    private string OzetSaati = "17:30";
+
+    private void SekmeDegistir(BildirimSekmesi sekme)
+    {
+        AktifSekme = sekme;
+        FormMesaji = string.Empty;
+    }
+
+    private void UygulamaIciDegistir() => UygulamaIci = !UygulamaIci;
+    private void EpostaDegistir() => EpostaBildirimleri = !EpostaBildirimleri;
+    private void GunlukOzetDegistir() => GunlukOzet = !GunlukOzet;
+    private void AtamaBildirimleriniDegistir() => AtamaBildirimleri = !AtamaBildirimleri;
+    private void DurumDegisiklikleriniDegistir() => DurumDegisiklikleri = !DurumDegisiklikleri;
+    private void YorumlariDegistir() => YorumVeBahsetmeler = !YorumVeBahsetmeler;
+    private void SprintRiskleriniDegistir() => SprintRiskleri = !SprintRiskleri;
+
+    private async Task Kaydet()
+    {
+        FormMesaji = "Bildirim tercihleri kaydedildi.";
+        await OnKaydetildi.InvokeAsync(FormMesaji);
+        await OnKapat.InvokeAsync();
+    }
+
+    private Task Kapat()
+    {
+        FormMesaji = string.Empty;
+        return OnKapat.InvokeAsync();
+    }
+
+    private enum BildirimSekmesi
+    {
+        Kanal,
+        Olay,
+        Ozet
+    }
+}

@@ -1,0 +1,307 @@
+@page "/ayarlar"
+@using Microsoft.AspNetCore.Components
+
+<PageTitle>Ayarlar</PageTitle>
+
+<div class="tasks-shell">
+    <section class="tasks-hero">
+        <div>
+            <div class="hero-badge">Ayarlar Merkezi</div>
+            <h1>Sistem ayarları</h1>
+            <p>Sprint yapılandırmalarını ve site içi genel davranışları tek merkezden yönetin.</p>
+        </div>
+
+        <div class="hero-actions">
+            <a class="ghost-action" href="/sprint-yonetimi">Sprint paneline dön</a>
+            <a class="primary-action" href="/gorevler">Görev özetine git</a>
+        </div>
+    </section>
+
+    <section class="workspace-shell settings-shell">
+        <aside class="view-rail settings-rail">
+            <button class="@(AktifSekme == AyarSekmesi.Sprint ? "rail-tab active" : "rail-tab")" @onclick="() => SekmeyiAc(AyarSekmesi.Sprint)">
+                <span>Sp</span>
+                <strong>Sprint Ayarları</strong>
+                <small>Süre, hedef ve iş akışı kuralları</small>
+            </button>
+
+            <button class="@(AktifSekme == AyarSekmesi.Site ? "rail-tab active" : "rail-tab")" @onclick="() => SekmeyiAc(AyarSekmesi.Site)">
+                <span>St</span>
+                <strong>Site Ayarları</strong>
+                <small>Arayüz, bildirim ve sistem tercihleri</small>
+            </button>
+        </aside>
+
+        <div class="workspace-stage">
+            @if (AktifSekme == AyarSekmesi.Sprint)
+            {
+                <div class="overview-shell">
+                    <section class="board-card">
+                        <div class="board-header">
+                            <div>
+                                <span class="section-kicker">Sprint Ayarları</span>
+                                <h2>Aktif sprint yapılandırması</h2>
+                            </div>
+                            <button class="primary-action" @onclick="SprintAyarlariKaydet">Kaydet</button>
+                        </div>
+
+                        <div class="form-grid modal-form-grid">
+                            <label>
+                                Aktif sprint adı
+                                <input @bind="SprintAdi" @bind:event="oninput" />
+                            </label>
+
+                            <label>
+                                Sprint süresi
+                                <select @bind="SprintSuresi">
+                                    <option value="1 hafta">1 hafta</option>
+                                    <option value="2 hafta">2 hafta</option>
+                                    <option value="3 hafta">3 hafta</option>
+                                    <option value="4 hafta">4 hafta</option>
+                                </select>
+                            </label>
+
+                            <label>
+                                Sprint hedefi
+                                <textarea rows="4" @bind="SprintHedefi"></textarea>
+                            </label>
+
+                            <label>
+                                WIP limiti
+                                <input type="number" @bind="WipLimiti" />
+                            </label>
+
+                            <label>
+                                Varsayılan başlangıç sütunu
+                                <select @bind="BaslangicDurumu">
+                                    <option value="Analiz">Analiz</option>
+                                    <option value="Analiz tamamlandı">Analiz tamamlandı</option>
+                                    <option value="Geliştirme">Geliştirme</option>
+                                    <option value="Teste hazır">Teste hazır</option>
+                                </select>
+                            </label>
+
+                            <label>
+                                Sprint kapanış kuralı
+                                <select @bind="KapanisKurali">
+                                    <option value="Tüm kritik işler kapanmalı">Tüm kritik işler kapanmalı</option>
+                                    <option value="Test aşamasındakiler taşınabilir">Test aşamasındakiler taşınabilir</option>
+                                    <option value="Manuel karar ile kapat">Manuel karar ile kapat</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="ghost-action" @onclick="SprintSablonuYukle">Önerilen şablonu yükle</button>
+                            <button class="action-btn" @onclick="SprintFormunuSifirla">Formu sıfırla</button>
+                        </div>
+                    </section>
+
+                    <section class="overview-grid sprint-grid-3">
+                        <article class="overview-card">
+                            <span>Durum akışı</span>
+                            <strong>6 adımlı süreç</strong>
+                            <p>Analiz, analiz tamamlandı, geliştirme, teste hazır, test ve tamamlandı akışı aktif.</p>
+                        </article>
+
+                        <article class="overview-card">
+                            <span>İş kuralı</span>
+                            <strong>WIP limiti @WipLimiti</strong>
+                            <p>Geliştirme ve test kuyrukları için sınır tanımlayarak darboğazları erkenden görün.</p>
+                        </article>
+
+                        <article class="overview-card">
+                            <span>Kapanış mantığı</span>
+                            <strong>@KapanisKurali</strong>
+                            <p>Sprint sonu karar mekanizmasını ekip ritmine göre standardize et.</p>
+                        </article>
+                    </section>
+                </div>
+            }
+            else
+            {
+                <div class="overview-shell">
+                    <section class="board-card">
+                        <div class="board-header">
+                            <div>
+                                <span class="section-kicker">Site Ayarları</span>
+                                <h2>Genel sistem tercihleri</h2>
+                            </div>
+                            <button class="primary-action" @onclick="SiteAyarlariKaydet">Kaydet</button>
+                        </div>
+
+                        <div class="form-grid modal-form-grid">
+                            <label>
+                                Varsayılan açılış ekranı
+                                <select @bind="VarsayilanAcilisEkrani">
+                                    <option value="Genel Bakış">Genel Bakış</option>
+                                    <option value="Görevler">Görevler</option>
+                                    <option value="Sprint Yönetimi">Sprint Yönetimi</option>
+                                </select>
+                            </label>
+
+                            <label>
+                                Bildirim yoğunluğu
+                                <select @bind="BildirimYogunlugu">
+                                    <option value="Sade">Sade</option>
+                                    <option value="Standart">Standart</option>
+                                    <option value="Yoğun">Yoğun</option>
+                                </select>
+                            </label>
+
+                            <label>
+                                Tarih biçimi
+                                <select @bind="TarihBicimi">
+                                    <option value="dd MMM yyyy">dd MMM yyyy</option>
+                                    <option value="dd.MM.yyyy">dd.MM.yyyy</option>
+                                    <option value="yyyy-MM-dd">yyyy-MM-dd</option>
+                                </select>
+                            </label>
+
+                            <label>
+                                Kart yoğunluğu
+                                <select @bind="KartYogunlugu">
+                                    <option value="Rahat">Rahat</option>
+                                    <option value="Standart">Standart</option>
+                                    <option value="Kompakt">Kompakt</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-toggle-grid">
+                            <button class="@(CanliBildirimler ? "settings-toggle-card active" : "settings-toggle-card")" @onclick="CanliBildirimleriDegistir">
+                                <strong>Canlı bildirimler</strong>
+                                <small>@(CanliBildirimler ? "Açık" : "Kapalı")</small>
+                            </button>
+
+                            <button class="@(DetaydaYorumAlaniAcik ? "settings-toggle-card active" : "settings-toggle-card")" @onclick="YorumAlaniniDegistir">
+                                <strong>Detayda yorum alanı</strong>
+                                <small>@(DetaydaYorumAlaniAcik ? "Varsayılan açık" : "Varsayılan kapalı")</small>
+                            </button>
+
+                            <button class="@(KisaYolIpuclari ? "settings-toggle-card active" : "settings-toggle-card")" @onclick="KisaYollariDegistir">
+                                <strong>Kısayol ipuçları</strong>
+                                <small>@(KisaYolIpuclari ? "Gösteriliyor" : "Gizli")</small>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="overview-grid">
+                        <article class="overview-card">
+                            <span>Açılış deneyimi</span>
+                            <strong>@VarsayilanAcilisEkrani</strong>
+                            <p>Kullanıcı sisteme girdiğinde ilk göreceği ana ekran tercihi.</p>
+                        </article>
+
+                        <article class="overview-card">
+                            <span>Arayüz yoğunluğu</span>
+                            <strong>@KartYogunlugu görünüm</strong>
+                            <p>Kart ve içerik bloklarının kullanım yoğunluğunu tek noktadan yönet.</p>
+                        </article>
+
+                        <article class="overview-card">
+                            <span>Bildirim profili</span>
+                            <strong>@BildirimYogunlugu</strong>
+                            <p>İşlem sonrası geri bildirimlerin ne kadar görünür olacağını belirler.</p>
+                        </article>
+                    </section>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(FormMesaji))
+            {
+                <div class="modal-message settings-message">@FormMesaji</div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "sekme")] public string? Sekme { get; set; }
+
+    private AyarSekmesi AktifSekme = AyarSekmesi.Sprint;
+    private string FormMesaji = string.Empty;
+
+    private string SprintAdi = "Sprint 12";
+    private string SprintSuresi = "2 hafta";
+    private string SprintHedefi = "Yüksek öncelikli müşteri kayıtlarını kapat ve test kuyruğunu temizle.";
+    private int WipLimiti = 4;
+    private string BaslangicDurumu = "Analiz";
+    private string KapanisKurali = "Tüm kritik işler kapanmalı";
+
+    private string VarsayilanAcilisEkrani = "Genel Bakış";
+    private string BildirimYogunlugu = "Standart";
+    private string TarihBicimi = "dd MMM yyyy";
+    private string KartYogunlugu = "Standart";
+    private bool CanliBildirimler = true;
+    private bool DetaydaYorumAlaniAcik = true;
+    private bool KisaYolIpuclari = false;
+
+    protected override void OnParametersSet()
+    {
+        AktifSekme = Sekme switch
+        {
+            "site" => AyarSekmesi.Site,
+            "profil" => AyarSekmesi.Site,
+            "guvenlik" => AyarSekmesi.Site,
+            "bildirim" => AyarSekmesi.Site,
+            "ozellikler" => AyarSekmesi.Site,
+            _ => AyarSekmesi.Sprint
+        };
+    }
+
+    private void SekmeyiAc(AyarSekmesi sekme)
+    {
+        AktifSekme = sekme;
+        FormMesaji = string.Empty;
+    }
+
+    private void SprintAyarlariKaydet() => FormMesaji = "Sprint ayarları kaydedildi.";
+    private void SiteAyarlariKaydet() => FormMesaji = "Site ayarları kaydedildi.";
+
+    private void SprintSablonuYukle()
+    {
+        SprintAdi = "Sprint 13";
+        SprintSuresi = "2 hafta";
+        SprintHedefi = "Analizden teste kadar akışı dengeleyip kritik işlerin kapanışını hızlandır.";
+        WipLimiti = 5;
+        BaslangicDurumu = "Analiz";
+        KapanisKurali = "Test aşamasındakiler taşınabilir";
+        FormMesaji = "Önerilen sprint şablonu yüklendi.";
+    }
+
+    private void SprintFormunuSifirla()
+    {
+        SprintAdi = string.Empty;
+        SprintSuresi = "2 hafta";
+        SprintHedefi = string.Empty;
+        WipLimiti = 3;
+        BaslangicDurumu = "Analiz";
+        KapanisKurali = "Tüm kritik işler kapanmalı";
+        FormMesaji = "Sprint formu sıfırlandı.";
+    }
+
+    private void CanliBildirimleriDegistir()
+    {
+        CanliBildirimler = !CanliBildirimler;
+        FormMesaji = $"Canlı bildirimler {(CanliBildirimler ? "açıldı" : "kapatıldı")}.";
+    }
+
+    private void YorumAlaniniDegistir()
+    {
+        DetaydaYorumAlaniAcik = !DetaydaYorumAlaniAcik;
+        FormMesaji = $"Detay yorum alanı varsayılanı {(DetaydaYorumAlaniAcik ? "açık" : "kapalı")} olarak ayarlandı.";
+    }
+
+    private void KisaYollariDegistir()
+    {
+        KisaYolIpuclari = !KisaYolIpuclari;
+        FormMesaji = $"Kısayol ipuçları {(KisaYolIpuclari ? "gösterilecek" : "gizlenecek")}.";
+    }
+
+    private enum AyarSekmesi
+    {
+        Sprint,
+        Site
+    }
+}

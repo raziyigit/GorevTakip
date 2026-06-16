@@ -1,0 +1,163 @@
+@if (AcikMi)
+{
+    <div class="modal-backdrop profile-modal-backdrop" @onclick="Kapat">
+        <div class="modal-card profile-modal-card" @onclick:stopPropagation="true">
+            <div class="profile-modal-header">
+                <h2>Kullanıcı profili</h2>
+                <button class="profile-close" @onclick="Kapat">×</button>
+            </div>
+
+            <div class="profile-identity">
+                <div class="profile-avatar">MY</div>
+                <div>
+                    <strong>Razi Mert YİĞİT</strong>
+                    <small>razimert.yigit</small>
+                </div>
+            </div>
+
+            <div class="profile-tabs">
+                <button class="@(AktifSekme == ProfilSekmesi.Genel ? "profile-tab active" : "profile-tab")" @onclick='() => SekmeDegistir(ProfilSekmesi.Genel)'>GENEL</button>
+                <button class="@(AktifSekme == ProfilSekmesi.YerelAyar ? "profile-tab active" : "profile-tab")" @onclick='() => SekmeDegistir(ProfilSekmesi.YerelAyar)'>YEREL AYAR</button>
+            </div>
+
+            @if (AktifSekme == ProfilSekmesi.Genel)
+            {
+                <div class="profile-panel">
+                    <button class="profile-link-btn" @onclick="ResimDegistir">Resmi değiştir</button>
+
+                    <div class="profile-section-title">KULLANICI BİLGİLERİ</div>
+                    <div class="profile-form-grid">
+                        <label>
+                            Görünen Ad
+                            <input @bind="GorunenAd" @bind:event="oninput" />
+                        </label>
+                        <label>
+                            Tercih edilen e-posta
+                            <input @bind="Eposta" @bind:event="oninput" />
+                        </label>
+                    </div>
+
+                    <div class="profile-section-title">UI AYARLARI</div>
+                    <div class="profile-form-grid">
+                        <label>
+                            İş öğesi formu
+                            <select @bind="IsOgesiFormu">
+                                <option value="Alan kenarlıklarını gizle">Alan kenarlıklarını gizle</option>
+                                <option value="Standart görünüm">Standart görünüm</option>
+                                <option value="Kompakt görünüm">Kompakt görünüm</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="profile-panel">
+                    <div class="profile-section-title">AYARLAR</div>
+                    <div class="profile-form-grid">
+                        <label>
+                            Dil
+                            <select @bind="Dil">
+                                <option value="Tarayıcı: Türkçe (Türkiye)">Tarayıcı: Türkçe (Türkiye)</option>
+                                <option value="Türkçe">Türkçe</option>
+                            </select>
+                        </label>
+                        <label>
+                            Takvim türü
+                            <input value="Miladi Takvim" disabled />
+                        </label>
+                        <label>
+                            Tarih düzeni
+                            <input value="15.06.2026 (d.MM.yyyy)" disabled />
+                        </label>
+                        <label>
+                            Saat düzeni
+                            <input value="16:09 (HH:mm)" disabled />
+                        </label>
+                        <label>
+                            Saat dilimi
+                            <select @bind="SaatDilimi">
+                                <option value="Kuruluş: (UTC+03:00) Istanbul">Kuruluş: (UTC+03:00) Istanbul</option>
+                                <option value="UTC">UTC</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(FormMesaji))
+            {
+                <div class="profile-message">@FormMesaji</div>
+            }
+
+            <div class="profile-actions">
+                <button class="primary-action @(DegisiklikVar ? string.Empty : "profile-save-disabled")" disabled="@(!DegisiklikVar)" @onclick="Kaydet">
+                    Değişiklikleri kaydet
+                </button>
+                <button class="ghost-action" @onclick="Kapat">İptal</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool AcikMi { get; set; }
+    [Parameter] public EventCallback OnKapat { get; set; }
+    [Parameter] public EventCallback<string> OnKaydetildi { get; set; }
+
+    private ProfilSekmesi AktifSekme = ProfilSekmesi.Genel;
+    private string GorunenAd = "Razi Mert YİĞİT";
+    private string Eposta = "razimert.yigit@saglik.gov.tr";
+    private string IsOgesiFormu = "Alan kenarlıklarını gizle";
+    private string Dil = "Tarayıcı: Türkçe (Türkiye)";
+    private string SaatDilimi = "Kuruluş: (UTC+03:00) Istanbul";
+    private string FormMesaji = string.Empty;
+    private bool DegisiklikVar =>
+        GorunenAd != _gorunenAdShadow ||
+        Eposta != _epostaShadow ||
+        IsOgesiFormu != _isOgesiFormuShadow ||
+        Dil != _dilShadow ||
+        SaatDilimi != _saatDilimiShadow;
+
+    private void SekmeDegistir(ProfilSekmesi sekme)
+    {
+        AktifSekme = sekme;
+        FormMesaji = string.Empty;
+    }
+
+    private void ResimDegistir()
+    {
+        FormMesaji = "Profil resmi değiştirme akışı kullanıcı modülü sonrasında bağlanacak.";
+    }
+
+    private async Task Kaydet()
+    {
+        _gorunenAdShadow = GorunenAd;
+        _epostaShadow = Eposta;
+        _isOgesiFormuShadow = IsOgesiFormu;
+        _dilShadow = Dil;
+        _saatDilimiShadow = SaatDilimi;
+        FormMesaji = "Profil tercihleri kaydedildi.";
+        await OnKaydetildi.InvokeAsync(FormMesaji);
+        await OnKapat.InvokeAsync();
+    }
+
+    private Task Kapat()
+    {
+        FormMesaji = string.Empty;
+        return OnKapat.InvokeAsync();
+    }
+
+    private enum ProfilSekmesi
+    {
+        Genel,
+        YerelAyar
+    }
+
+    private string _gorunenAdShadow = "Razi Mert YİĞİT";
+    private string _epostaShadow = "razimert.yigit@saglik.gov.tr";
+    private string _isOgesiFormuShadow = "Alan kenarlıklarını gizle";
+    private string _dilShadow = "Tarayıcı: Türkçe (Türkiye)";
+    private string _saatDilimiShadow = "Kuruluş: (UTC+03:00) Istanbul";
+
+}

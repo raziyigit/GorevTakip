@@ -1,0 +1,136 @@
+@page "/gorevler"
+@inject GorevDurumService GorevServisi
+
+<PageTitle>Görevler</PageTitle>
+
+<div class="tasks-shell">
+    <section class="tasks-hero">
+        <div>
+            <div class="hero-badge">Görev Özeti</div>
+            <h1>Görevler</h1>
+            <p>Bu ekran görev operasyonunun merkezi özeti. Buradan pano görünümüne, liste görünümüne ve yeni madde oluşturma akışına geçebilirsiniz.</p>
+        </div>
+
+        <div class="hero-actions">
+            <button class="ghost-action" @onclick="PencereyiAc">Yeni madde aç</button>
+            <a class="primary-action" href="/gorevler/liste">Liste görünümüne git</a>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <article class="metric-card">
+            <span>Toplam kayıt</span>
+            <strong>@GorevServisi.ToplamGorevSayisi</strong>
+            <small>Tüm aktif ve tamamlanan iş kalemleri</small>
+        </article>
+
+        <article class="metric-card accent-blue">
+            <span>Tamamlanan</span>
+            <strong>@GorevServisi.TamamlananSayisi</strong>
+            <small>@GorevServisi.TamamlanmaOrani% kapanış oranı</small>
+        </article>
+
+        <article class="metric-card accent-amber">
+            <span>Devam eden</span>
+            <strong>@GorevServisi.DevamEdenSayisi</strong>
+            <small>Üzerinde çalışılan görevler</small>
+        </article>
+
+        <article class="metric-card accent-red">
+            <span>Yüksek öncelik</span>
+            <strong>@GorevServisi.YuksekOncelikSayisi</strong>
+            <small>Yakın takip gerektiren işler</small>
+        </article>
+    </section>
+
+    <section class="panel-grid">
+        <article class="summary-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Seçili kayıt</span>
+                    <h2>Görev özeti</h2>
+                </div>
+            </div>
+
+            @if (GorevServisi.SeciliGorev is not null)
+            {
+                var gorev = GorevServisi.SeciliGorev;
+                <div class="selected-task-card selected-task-card-standalone">
+                    <div class="selected-task-head">
+                        <strong>@gorev.Kod</strong>
+                        <span class="priority-badge @GorevServisi.OncelikSinifi(gorev.Oncelik)">@GorevServisi.OncelikEtiketi(gorev.Oncelik)</span>
+                    </div>
+                    <h3>@gorev.Baslik</h3>
+                    <p>@gorev.Aciklama</p>
+                    <div class="selected-task-meta">
+                        <span>@GorevServisi.DurumEtiketi(gorev.Durum)</span>
+                        <span class="issue-badge @GorevServisi.IsTipiSinifi(gorev.IsTipi)">@GorevServisi.IsTipiEtiketi(gorev.IsTipi)</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="selected-task-empty">Henüz seçili görev yok.</div>
+            }
+        </article>
+
+        <article class="board-card">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Çalışma akışı</span>
+                    <h2>Nereden devam edelim?</h2>
+                </div>
+            </div>
+
+            <div class="summary-list">
+                <div>
+                    <strong>Pano görünümü</strong>
+                    <small>Kart bazlı süreç takibi için soldaki alt menüden açılır.</small>
+                </div>
+                <div>
+                    <strong>Liste görünümü</strong>
+                    <small>Tablo bazlı ayrıntılı yönetim için soldaki alt menüden açılır.</small>
+                </div>
+                <div>
+                    <strong>Yeni madde aç</strong>
+                    <small>Üstteki buton üzerinden pop-up ile yeni kayıt oluşturulur.</small>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="board-card">
+        <div class="board-header">
+            <div>
+                <span class="section-kicker">İş türleri</span>
+                <h2>Madde dağılımı</h2>
+            </div>
+        </div>
+
+        <div class="issue-type-grid">
+            @foreach (var tip in GorevServisi.IsTipiOzetleri)
+            {
+                <article class="issue-type-card">
+                    <div class="issue-type-card-top">
+                        <span class="issue-badge @GorevServisi.IsTipiSinifi(tip.Tip)">@GorevServisi.IsTipiEtiketi(tip.Tip)</span>
+                        <strong>@tip.Adet</strong>
+                    </div>
+                    <p>@tip.Aciklama</p>
+                </article>
+            }
+        </div>
+    </section>
+</div>
+
+<GorevOlusturmaModal AcikMi="@ModalAcik"
+                     Baslik="Yeni madde oluştur"
+                     KaydetYazisi="Kaydı aç"
+                     OnKapat="PencereyiKapat" />
+
+@code {
+    private bool ModalAcik;
+
+    private void PencereyiAc() => ModalAcik = true;
+
+    private void PencereyiKapat() => ModalAcik = false;
+}
